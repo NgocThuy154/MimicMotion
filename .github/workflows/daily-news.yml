@@ -2,7 +2,7 @@ name: Daily News Update & Email
 
 on:
   schedule:
-    - cron: '0 2 * * *' # 9:00 AM Vietnam (UTC+7)
+    - cron: '5 8 * * *' # 15:05 Vietnam (UTC+7)
   workflow_dispatch:
 
 jobs:
