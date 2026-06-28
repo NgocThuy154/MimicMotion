@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phân Tích Chứng Khoán VN - Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#242836;--border:#2d3248;
+  --text:#e4e6ef;--text2:#9ca3c0;--accent:#4f8cff;
+  --red:#ef4444;--green:#22c55e;--orange:#f59e0b;--blue:#3b82f6;--purple:#a855f7;
+  --cyan:#06b6d4;
+}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+.container{max-width:1400px;margin:0 auto;padding:0 16px}
+
+/* Header */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 0;position:sticky;top:0;z-index:100}
+.header-content{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.logo{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.logo span{color:var(--green)}
+.market-info{display:flex;gap:16px;align-items:center;font-size:0.85rem}
+.market-info .index{font-weight:600;color:var(--text)}
+.market-info .change{color:var(--green);font-weight:600}
+.market-info .date{color:var(--text2)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;padding:12px 0;overflow-x:auto}
+.tab{padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.9rem;
+  background:transparent;border:1px solid transparent;color:var(--text2);transition:all .2s;white-space:nowrap}
+.tab:hover{background:var(--surface);color:var(--text)}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* Tab content */
+.tab-content{display:none;padding:20px 0;animation:fadeIn .3s}
+.tab-content.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* KPI Cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+.kpi-card .label{font-size:0.8rem;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.kpi-card .value{font-size:1.6rem;font-weight:700}
+.kpi-card .sub{font-size:0.8rem;color:var(--text2);margin-top:4px}
+.kpi-card.highlight{border-color:var(--accent);background:linear-gradient(135deg,var(--surface),rgba(79,140,255,.1))}
+
+/* Chart */
+.chart-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px}
+.chart-section h3{margin-bottom:16px;font-size:1rem;color:var(--text2)}
+.bar-chart{display:flex;align-items:flex-end;gap:12px;height:220px;padding-top:20px}
+.bar-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.bar{width:100%;border-radius:6px 6px 0 0;min-height:4px;transition:height .5s;position:relative}
+.bar-label{font-size:0.75rem;font-weight:600;color:var(--text)}
+.bar-value{font-size:0.7rem;font-weight:700;color:var(--text)}
+
+/* Tables */
+.table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:0.85rem}
+th{background:var(--surface2);padding:12px 14px;text-align:left;font-weight:600;color:var(--text2);
+  white-space:nowrap;position:sticky;top:0;cursor:pointer;user-select:none;border-bottom:2px solid var(--border)}
+th:hover{color:var(--accent)}
+td{padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+tr:hover td{background:rgba(79,140,255,.05)}
+.text-red{color:var(--red)}.text-green{color:var(--green)}.text-orange{color:var(--orange)}
+.text-blue{color:var(--blue)}.text-purple{color:var(--purple)}.text-cyan{color:var(--cyan)}
+.fw-bold{font-weight:700}
+
+/* Badges */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:600}
+.badge-green{background:rgba(34,197,94,.15);color:var(--green)}
+.badge-blue{background:rgba(59,130,246,.15);color:var(--blue)}
+.badge-orange{background:rgba(245,158,11,.15);color:var(--orange)}
+.badge-red{background:rgba(239,68,68,.15);color:var(--red)}
+.badge-gray{background:rgba(156,163,192,.15);color:var(--text2)}
+.badge-purple{background:rgba(168,85,247,.15);color:var(--purple)}
+
+/* Detail Cards */
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px}
+.detail-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+.detail-card .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.detail-card .ticker{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.detail-card .company{font-size:0.8rem;color:var(--text2)}
+.detail-card .sector{font-size:0.75rem}
+.detail-card .price-row{display:flex;gap:16px;margin-bottom:14px;font-size:0.85rem}
+.detail-card .price-row span{display:flex;flex-direction:column}
+.detail-card .price-row .plabel{font-size:0.7rem;color:var(--text2);margin-bottom:2px}
+
+/* Progress bar */
+.progress-wrap{margin-bottom:16px}
+.progress-labels{display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:4px;color:var(--text2)}
+.progress-bar{height:10px;background:var(--surface2);border-radius:5px;position:relative;overflow:visible}
+.progress-fill{height:100%;border-radius:5px;position:relative}
+.progress-marker{position:absolute;top:-4px;width:3px;height:18px;background:var(--text);border-radius:2px;transform:translateX(-50%)}
+
+.info-section{margin-bottom:10px}
+.info-section .info-title{font-size:0.75rem;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.info-section p{font-size:0.83rem;color:var(--text);line-height:1.6}
+
+/* News */
+.news-feed{display:flex;flex-direction:column;gap:12px}
+.news-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;gap:14px;align-items:flex-start}
+.news-item .news-tag{min-width:70px}
+.news-item .news-body{flex:1}
+.news-item .news-ticker{font-weight:700;color:var(--accent);margin-right:6px}
+.news-item .news-text{font-size:0.85rem;color:var(--text)}
+.news-item .news-date{font-size:0.72rem;color:var(--text2);margin-top:4px}
+
+/* Filter */
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;
+  color:var(--text2);cursor:pointer;font-size:0.8rem;transition:all .2s}
+.filter-btn:hover,.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* Section title */
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:16px;color:var(--text)}
+
+/* Warning box */
+.warning-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px;margin-bottom:16px;font-size:0.82rem}
+.warning-box strong{color:var(--red)}
+
+/* Footer */
+footer{text-align:center;padding:30px 0;color:var(--text2);font-size:0.75rem;border-top:1px solid var(--border);margin-top:40px}
+
+/* Responsive */
+@media(max-width:768px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .detail-grid{grid-template-columns:1fr}
+  .bar-chart{height:160px}
+  .header-content{flex-direction:column;align-items:flex-start}
+  .tabs{gap:2px}
+  .tab{padding:8px 14px;font-size:0.82rem}
+}
+@media(max-width:480px){
+  .kpi-grid{grid-template-columns:1fr}
+}
+
+/* Disclaimer */
+.disclaimer{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:20px;font-size:0.75rem;color:var(--text2)}
+</style>
+</head>
+<body>
+
+<header>
+<div class="container header-content">
+  <div class="logo">VN Stock <span>Dashboard</span></div>
+  <div class="market-info">
+    <span class="index">VN30-Index: 1.995,12</span>
+    <span class="change">+0,76%</span>
+    <span class="date">Phien 23/06/2026</span>
+  </div>
+</div>
+</header>
+
+<div class="container">
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="overview">Tong Quan</div>
+    <div class="tab" data-tab="prices">Bang Gia</div>
+    <div class="tab" data-tab="dividends">Co Tuc</div>
+    <div class="tab" data-tab="details">Chi Tiet</div>
+    <div class="tab" data-tab="news">Tin Nong</div>
+  </div>
+
+  <!-- TAB 1: TONG QUAN -->
+  <div class="tab-content active" id="overview">
+    <div class="kpi-grid">
+      <div class="kpi-card highlight">
+        <div class="label">VN30-Index</div>
+        <div class="value">1.995,12</div>
+        <div class="sub text-green">+0,76% phien 23/06</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">Ma theo doi</div>
+        <div class="value">9</div>
+        <div class="sub">CII GMD LPB DGC GEX VIC CMG DCM PAN</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">Upside trung binh</div>
+        <div class="value text-green">+27,8%</div>
+        <div class="sub">Tu 14% (VIC) den 40% (PAN)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">Div Yield TB (co chia)</div>
+        <div class="value text-cyan">5,6%</div>
+        <div class="sub">LPB 5,7% | PAN 13,2% | GMD 2,9%</div>
+      </div>
+      <div class="kpi-card" style="border-color:var(--green)">
+        <div class="label">Ma tot nhat - Tong LS</div>
+        <div class="value text-green">PAN +53%</div>
+        <div class="sub">Upside 40% + Div 13,2%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">Ngan han nhat</div>
+        <div class="value text-orange">VIC - Q3/2026</div>
+        <div class="sub">TP 260.000 (+14%)</div>
+      </div>
+    </div>
+
+    <div class="chart-section">
+      <h3>Tong Loi Suat Ky Vong (Upside + Co Tuc)</h3>
+      <div class="bar-chart" id="returnChart"></div>
+    </div>
+
+    <div class="section-title">Snapshot 9 Ma</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Ma</th><th>Gia 23/6</th><th>Upside</th><th>Tong LS</th><th>Thoi gian TP</th><th>Phan nhom</th>
+        </tr></thead>
+        <tbody id="snapshotTable"></tbody>
+      </table>
+    </div>
+
+    <div class="disclaimer">
+      Tat ca gia va phan tich dua tren du lieu phien 22-23/06/2026. Tai lieu chi mang tinh THAM KHAO noi bo, khong phai khuyen nghi dau tu chinh thuc.
+      Nguon: CafeF, Vietstock, TradingView, Vietcap, ABS, SSI Research.
+    </div>
+  </div>
+
+  <!-- TAB 2: BANG GIA -->
+  <div class="tab-content" id="prices">
+    <div class="section-title">Bang Gia Chi Tiet - Phien 23/06/2026</div>
+    <div class="warning-box">
+      <strong>Chu thich mau:</strong>
+      <span class="text-red">DO = Cat lo (SL)</span> &nbsp;|&nbsp;
+      <span class="text-green">XANH = Ky vong (TP) / Upside</span> &nbsp;|&nbsp;
+      <span class="text-blue">XANH DUONG = Tong loi suat</span> &nbsp;|&nbsp;
+      <span class="text-orange">CAM = Thoi gian dat TP</span>
+    </div>
+    <div class="table-wrap">
+      <table id="priceTable">
+        <thead><tr>
+          <th data-sort="ticker">Ma</th>
+          <th data-sort="sector">Nganh</th>
+          <th data-sort="price">Gia 23/6</th>
+          <th data-sort="sl">Cat lo SL</th>
+          <th data-sort="rr">% RR</th>
+          <th data-sort="tp">Ky vong TP</th>
+          <th data-sort="upside">Upside</th>
+          <th>Co tuc</th>
+          <th data-sort="div">Div%</th>
+          <th data-sort="total">Tong LS</th>
+          <th>TG dat TP</th>
+        </tr></thead>
+        <tbody id="priceTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 3: CO TUC -->
+  <div class="tab-content" id="dividends">
+    <div class="section-title">Lich Co Tuc 2025-2026</div>
+    <div class="filter-bar" id="divFilter">
+      <button class="filter-btn active" data-filter="all">Tat ca</button>
+      <button class="filter-btn" data-filter="done">Da thuc hien</button>
+      <button class="filter-btn" data-filter="pending">Cho cong bo</button>
+      <button class="filter-btn" data-filter="none">Khong co tuc</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Ma</th><th>Hinh thuc</th><th>Muc chia</th><th>D/CP</th><th>Div Yield</th><th>Ngay chot QR</th><th>Thanh toan</th><th>Trang thai</th>
+        </tr></thead>
+        <tbody id="divTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 4: CHI TIET -->
+  <div class="tab-content" id="details">
+    <div class="section-title">Phan Tich Chi Tiet Tung Ma</div>
+    <div class="filter-bar" id="timeFilter">
+      <button class="filter-btn active" data-filter="all">Tat ca</button>
+      <button class="filter-btn" data-filter="short">Ngan han (&lt;3T)</button>
+      <button class="filter-btn" data-filter="medium">Trung han (3-6T)</button>
+      <button class="filter-btn" data-filter="long">Dai han (6-9T)</button>
+      <button class="filter-btn" data-filter="vlong">Rat dai (&gt;9T)</button>
+    </div>
+    <div class="detail-grid" id="detailGrid"></div>
+  </div>
+
+  <!-- TAB 5: TIN NONG -->
+  <div class="tab-content" id="news">
+    <div class="section-title">Tin Nong & Su Kien</div>
+    <div class="filter-bar" id="newsFilter">
+      <button class="filter-btn active" data-filter="all">Tat ca</button>
+      <button class="filter-btn" data-filter="catalyst">Catalyst</button>
+      <button class="filter-btn" data-filter="risk">Rui ro</button>
+      <button class="filter-btn" data-filter="dividend">Co tuc</button>
+      <button class="filter-btn" data-filter="kqkd">KQKD</button>
+    </div>
+    <div class="news-feed" id="newsFeed"></div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    Nguon du lieu: CafeF, Vietstock, TradingView, Vietcap, ABS, SSI Research &middot; Ngay lap: 24/06/2026<br>
+    Tai lieu THAM KHAO noi bo &mdash; Khong phai khuyen nghi dau tu chinh thuc<br>
+    Firebase Project: bctaichinh-c0af0 &middot; VN Stock Dashboard v1.0
+  </div>
+</footer>
+
+<script>
+const STOCKS = [
+  {
+    ticker:'CII', name:'DT Ha Tang KT TP.HCM', sector:'Ha tang / BOT', sectorShort:'Ha tang',
+    price:18000, sl:14500, rrPct:-19, tp:24000, upside:33, divText:'~500d (2,8%)', divPct:2.8, totalReturn:36,
+    timeTP:'Q4/2026 - Q1/2027', timeGroup:'long',
+    catalyst:'Ghi nhan DT Thu Thiem + du an TOD theo tien do',
+    risk:'P/E 112x cao; nhu cau von lon; bi cat margin',
+    note:'Phu hop dai han. Co tuc thuc te thap ~500d/CP.',
+    divInfo:{form:'Tien mat',rate:'<=16% VDL',perShare:'~500',yield:'2,8%',exDate:'Linh hoat',payDate:'2026',status:'pending',statusText:'Chua xac nhan'}
+  },
+  {
+    ticker:'GMD', name:'Tap doan Gemadept', sector:'Cang bien / Logistics', sectorShort:'Cang bien',
+    price:76400, sl:65000, rrPct:-15, tp:90000, upside:18, divText:'2.200d (2,9%)', divPct:2.9, totalReturn:21,
+    timeTP:'Q3 - Q4/2026', timeGroup:'medium',
+    catalyst:'KQKD Q2 tot; muc tieu lai 2.800 ty; analyst TP 85.590d',
+    risk:'Chu ky thuong mai toan cau; cuoc van tai bien dong',
+    note:'7 analyst MUA. Co tuc 2.200d da chi 29/5/2026.',
+    divInfo:{form:'Tien mat',rate:'22%',perShare:'2.200',yield:'2,9%',exDate:'22/05/2026',payDate:'29/05/2026',status:'done',statusText:'DA THUC HIEN'}
+  },
+  {
+    ticker:'LPB', name:'LienVietPostBank', sector:'Ngan hang', sectorShort:'Ngan hang',
+    price:52600, sl:44000, rrPct:-16, tp:62000, upside:18, divText:'3.000d (5,7%)', divPct:5.7, totalReturn:24,
+    timeTP:'Q3 - Q4/2026', timeGroup:'medium',
+    catalyst:'Tin dung +17% YoY; NHNN nang ty le von ngan/dai -> NIM tot',
+    risk:'NPL sau chu ky tang nhanh; dinh gia khong con re',
+    note:'Tang kich tran 23/6. NDT ngoai +63 ty. YTD +35%.',
+    divInfo:{form:'Tien mat',rate:'30%',perShare:'3.000',yield:'5,7%',exDate:'15/05/2026',payDate:'Thang 6/2026',status:'done',statusText:'DA THUC HIEN'}
+  },
+  {
+    ticker:'DGC', name:'Hoa Chat Duc Giang', sector:'Hoa chat CN', sectorShort:'Hoa chat',
+    price:51500, sl:43000, rrPct:-17, tp:70000, upside:36, divText:'Het QR (3.000d chi 1/2026)', divPct:0, totalReturn:36,
+    timeTP:'Q1 - Q2/2027', timeGroup:'vlong',
+    catalyst:'BCTC 2025 da nop 22/6; Nghi Son GD3 van hanh; P/E 7,2x',
+    risk:'Lanh dao bi khoi to 17/3/2026; BCTC y kien ngoai tru KT',
+    note:'Tang 6,4% phien 22/6. Rui ro phap ly con ton tai.',
+    divInfo:{form:'Tien mat (2025)',rate:'30%',perShare:'3.000',yield:'-',exDate:'25/12/2025',payDate:'15/01/2026',status:'expired',statusText:'DA CHI, HET QR'}
+  },
+  {
+    ticker:'GEX', name:'Tap doan GELEX', sector:'Thiet bi dien / KCN', sectorShort:'Dien/KCN',
+    price:29950, sl:25000, rrPct:-17, tp:38000, upside:27, divText:'CP thuong (5/2026)', divPct:0, totalReturn:27,
+    timeTP:'Q4/2026 - Q1/2027', timeGroup:'long',
+    catalyst:'FDI KCN tang manh; NL tai tao; lai 2025 +497% YoY',
+    risk:'Dang dieu chinh tu dinh; no/von 0,96x',
+    note:'Cho tich luy on dinh vung 28-30k.',
+    divInfo:{form:'CP thuong + CT',rate:'~10-15%',perShare:'CP',yield:'-',exDate:'06/05/2026',payDate:'-',status:'done',statusText:'DA THUC HIEN'}
+  },
+  {
+    ticker:'VIC', name:'Tap doan Vingroup', sector:'BDS / San xuat o to', sectorShort:'BDS/Oto',
+    price:229000, sl:190000, rrPct:-17, tp:260000, upside:14, divText:'Khong chia co tuc', divPct:0, totalReturn:14,
+    timeTP:'Q3/2026', timeGroup:'short',
+    catalyst:'NDT ngoai mua rong 2.700 ty (23/6); KQKD Q2 ngay 5/8/2026',
+    risk:'Beta 1,91 - bien dong cuc manh; P/E >100x',
+    note:'ATH 232.000d (14/5). Von hoa 1.764T - lon nhat HOSE.',
+    divInfo:{form:'-',rate:'Khong chia',perShare:'-',yield:'-',exDate:'-',payDate:'-',status:'none',statusText:'Khong co tuc'}
+  },
+  {
+    ticker:'CMG', name:'Tap doan Cong nghe CMC', sector:'CNTT / Tich hop HT', sectorShort:'CNTT',
+    price:27800, sl:23000, rrPct:-17, tp:36000, upside:29, divText:'~500d (cho xac nhan)', divPct:1.8, totalReturn:31,
+    timeTP:'Q2 - Q3/2027', timeGroup:'vlong',
+    catalyst:'Ngan sach CNTT chinh phu tang; chuyen doi so DN',
+    risk:'Thieu catalyst ngan han; EBITDA margin 10% thap',
+    note:'Gia di ngang 1 nam. Cau chuyen dai han.',
+    divInfo:{form:'Tien mat (DK)',rate:'~5-10%',perShare:'~500',yield:'1,8%',exDate:'Cho CB',payDate:'-',status:'pending',statusText:'Cho xac nhan'}
+  },
+  {
+    ticker:'DCM', name:'Phan Bon Ca Mau (PVCFC)', sector:'Phan bon / Hoa dau', sectorShort:'Phan bon',
+    price:37500, sl:31000, rrPct:-17, tp:47000, upside:25, divText:'2.000d Q3/2026 (du kien)', divPct:5.3, totalReturn:30,
+    timeTP:'Q4/2026 - Q1/2027', timeGroup:'long',
+    catalyst:'VAT phan bon 5% tiet 150-450 ty/nam; TP Vietcap 46.600d',
+    risk:'Gia ure the gioi bien dong; canh tranh nhap khau',
+    note:'ROE 16,5%. ABS TP 47.500d. Dang dieu chinh ngan han.',
+    divInfo:{form:'Tien mat (DK)',rate:'20%',perShare:'2.000',yield:'5,3%',exDate:'Q3/2026',payDate:'Q3/2026',status:'pending',statusText:'Cho cong bo'}
+  },
+  {
+    ticker:'PAN', name:'Tap doan PAN', sector:'Nong nghiep / Thuc pham', sectorShort:'Nong nghiep',
+    price:22800, sl:18500, rrPct:-19, tp:32000, upside:40, divText:'3.000d (13,2%)', divPct:13.2, totalReturn:53,
+    timeTP:'Q4/2026 - Q1/2027', timeGroup:'long',
+    catalyst:'Lai +53% YoY 2026; Q1 lai x40 (Bibica); SSI tich cuc',
+    risk:'Gia nong san phu thuoc thoi tiet & xuat khau',
+    note:'Tong loi suat 53% - CAO NHAT danh muc. Div yield 13,2%.',
+    divInfo:{form:'Tien mat',rate:'30%',perShare:'3.000',yield:'13,2%',exDate:'01/06/2026',payDate:'Thang 7/2026',status:'done_qr',statusText:'DA CHOT QR'}
+  }
+];
+
+const NEWS = [
+  {ticker:'VIC',type:'catalyst',text:'NDT ngoai mua rong 2.700 ty phien 23/6. KQKD Q2 cong bo 5/8/2026.',date:'23/06/2026'},
+  {ticker:'LPB',type:'catalyst',text:'Tang kich tran phien 23/6. NDT ngoai +63 ty. Tin dung +17% YoY.',date:'23/06/2026'},
+  {ticker:'DGC',type:'risk',text:'Lanh dao bi khoi to 17/3/2026. BCTC 2025 co y kien ngoai tru kiem toan.',date:'22/06/2026'},
+  {ticker:'DGC',type:'kqkd',text:'BCTC 2025 da nop 22/6. Tang 6,4% phien 22/6. Nghi Son GD3 van hanh.',date:'22/06/2026'},
+  {ticker:'PAN',type:'kqkd',text:'Lai +53% YoY 2026. Q1 lai gap 40 lan nho Bibica. SSI danh gia tich cuc.',date:'23/06/2026'},
+  {ticker:'PAN',type:'dividend',text:'Co tuc 3.000d/CP (13,2% yield) - da chot quyen 01/06/2026. Thanh toan thang 7/2026.',date:'01/06/2026'},
+  {ticker:'GMD',type:'dividend',text:'Co tuc 2.200d/CP da chi ngay 29/05/2026. 7 analyst khuyen nghi MUA.',date:'29/05/2026'},
+  {ticker:'LPB',type:'dividend',text:'Co tuc 3.000d/CP (5,7% yield) da thuc hien. Chot QR 15/05/2026.',date:'15/05/2026'},
+  {ticker:'GEX',type:'catalyst',text:'FDI KCN tang manh. Nang luong tai tao. Lai 2025 +497% YoY.',date:'23/06/2026'},
+  {ticker:'GEX',type:'dividend',text:'CP thuong + co tuc da thuc hien 05/2026.',date:'06/05/2026'},
+  {ticker:'DCM',type:'catalyst',text:'VAT phan bon 5% tiet 150-450 ty/nam. TP Vietcap 46.600d. ABS TP 47.500d.',date:'23/06/2026'},
+  {ticker:'DCM',type:'dividend',text:'Du kien co tuc 2.000d/CP (5,3% yield) Q3/2026. Cho cong bo chinh thuc.',date:'23/06/2026'},
+  {ticker:'CII',type:'catalyst',text:'Cho ghi nhan DT Thu Thiem va du an TOD theo tien do.',date:'23/06/2026'},
+  {ticker:'CMG',type:'catalyst',text:'Ngan sach CNTT chinh phu tang. Cau chuyen chuyen doi so dai han.',date:'23/06/2026'},
+  {ticker:'VIC',type:'risk',text:'Beta 1,91 - bien dong cuc manh. P/E >100x. Chi phu hop NDT chap nhan rui ro cao.',date:'23/06/2026'},
+];
+
+function fmt(n){return n.toLocaleString('vi-VN')}
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc=>tc.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+  });
+});
+
+// BAR CHART
+function renderChart(){
+  const chart=document.getElementById('returnChart');
+  const max=Math.max(...STOCKS.map(s=>s.totalReturn));
+  chart.innerHTML=STOCKS.sort((a,b)=>b.totalReturn-a.totalReturn).map(s=>{
+    const h=(s.totalReturn/max)*180;
+    const color=s.totalReturn>=40?'var(--green)':s.totalReturn>=30?'var(--cyan)':s.totalReturn>=25?'var(--blue)':'var(--accent)';
+    return `<div class="bar-item">
+      <div class="bar-value">+${s.totalReturn}%</div>
+      <div class="bar" style="height:${h}px;background:${color}"></div>
+      <div class="bar-label">${s.ticker}</div>
+    </div>`;
+  }).join('');
+}
+
+// SNAPSHOT TABLE
+function renderSnapshot(){
+  const tbody=document.getElementById('snapshotTable');
+  const groupLabels={short:'Ngan han',medium:'Trung ngan han',long:'Trung - Dai han',vlong:'Dai han'};
+  const groupColors={short:'text-green',medium:'text-blue',long:'text-orange',vlong:'text-purple'};
+  tbody.innerHTML=STOCKS.sort((a,b)=>b.totalReturn-a.totalReturn).map(s=>`<tr>
+    <td class="fw-bold" style="color:var(--accent)">${s.ticker}</td>
+    <td>${fmt(s.price)}d</td>
+    <td class="text-green fw-bold">+${s.upside}%</td>
+    <td class="text-blue fw-bold">+${s.totalReturn}%</td>
+    <td class="text-orange">${s.timeTP}</td>
+    <td><span class="${groupColors[s.timeGroup]}">${groupLabels[s.timeGroup]}</span></td>
+  </tr>`).join('');
+}
+
+// PRICE TABLE
+function renderPriceTable(){
+  const tbody=document.getElementById('priceTableBody');
+  tbody.innerHTML=STOCKS.map(s=>`<tr>
+    <td class="fw-bold" style="color:var(--accent)">${s.ticker}</td>
+    <td>${s.sectorShort}</td>
+    <td class="fw-bold">${fmt(s.price)}</td>
+    <td class="text-red">${fmt(s.sl)}</td>
+    <td class="text-red fw-bold">${s.rrPct}%</td>
+    <td class="text-green fw-bold">${fmt(s.tp)}</td>
+    <td class="text-green">+${s.upside}%</td>
+    <td>${s.divText}</td>
+    <td>${s.divPct>0?s.divPct+'%':'-'}</td>
+    <td class="text-blue fw-bold">+${s.totalReturn}%</td>
+    <td class="text-orange">${s.timeTP}</td>
+  </tr>`).join('');
+}
+
+// Sortable price table
+let sortDir={};
+document.querySelectorAll('#priceTable th[data-sort]').forEach(th=>{
+  th.addEventListener('click',()=>{
+    const key=th.dataset.sort;
+    sortDir[key]=!sortDir[key];
+    const map={ticker:'ticker',sector:'sectorShort',price:'price',sl:'sl',rr:'rrPct',tp:'tp',upside:'upside',div:'divPct',total:'totalReturn'};
+    const field=map[key];
+    STOCKS.sort((a,b)=>{
+      let va=a[field],vb=b[field];
+      if(typeof va==='string')return sortDir[key]?va.localeCompare(vb):vb.localeCompare(va);
+      return sortDir[key]?va-vb:vb-va;
+    });
+    renderPriceTable();
+    renderChart();
+    renderSnapshot();
+  });
+});
+
+// DIVIDEND TABLE
+function renderDividends(filter='all'){
+  const tbody=document.getElementById('divTableBody');
+  const filtered=STOCKS.filter(s=>{
+    if(filter==='all')return true;
+    if(filter==='done')return['done','done_qr','expired'].includes(s.divInfo.status);
+    if(filter==='pending')return s.divInfo.status==='pending';
+    if(filter==='none')return s.divInfo.status==='none';
+    return true;
+  });
+  tbody.innerHTML=filtered.map(s=>{
+    const d=s.divInfo;
+    let badgeClass='badge-gray';
+    if(d.status==='done')badgeClass='badge-green';
+    else if(d.status==='done_qr')badgeClass='badge-blue';
+    else if(d.status==='expired')badgeClass='badge-red';
+    else if(d.status==='pending')badgeClass='badge-orange';
+    else if(d.status==='none')badgeClass='badge-gray';
+    return `<tr>
+      <td class="fw-bold" style="color:var(--accent)">${s.ticker}</td>
+      <td>${d.form}</td>
+      <td>${d.rate}</td>
+      <td>${d.perShare}</td>
+      <td>${d.yield}</td>
+      <td>${d.exDate}</td>
+      <td>${d.payDate}</td>
+      <td><span class="badge ${badgeClass}">${d.statusText}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+document.querySelectorAll('#divFilter .filter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#divFilter .filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderDividends(btn.dataset.filter);
+  });
+});
+
+// DETAIL CARDS
+function renderDetails(filter='all'){
+  const grid=document.getElementById('detailGrid');
+  const filtered=STOCKS.filter(s=>{
+    if(filter==='all')return true;
+    return s.timeGroup===filter;
+  });
+  grid.innerHTML=filtered.map(s=>{
+    const range=s.tp-s.sl;
+    const currentPos=((s.price-s.sl)/range)*100;
+    const slColor='var(--red)', tpColor='var(--green)';
+    const fillPct=Math.max(0,Math.min(100,currentPos));
+    const groupLabels={short:'Ngan han (<3T)',medium:'Trung ngan (3-6T)',long:'Trung-Dai (6-9T)',vlong:'Dai han (>9T)'};
+    const groupBadge={short:'badge-green',medium:'badge-blue',long:'badge-orange',vlong:'badge-purple'};
+
+    return `<div class="detail-card">
+      <div class="card-header">
+        <div>
+          <div class="ticker">${s.ticker}</div>
+          <div class="company">${s.name}</div>
+        </div>
+        <div style="text-align:right">
+          <span class="badge ${groupBadge[s.timeGroup]}">${groupLabels[s.timeGroup]}</span>
+          <div class="sector badge badge-gray" style="margin-top:4px">${s.sectorShort}</div>
+        </div>
+      </div>
+
+      <div class="price-row">
+        <span><span class="plabel">Gia hien tai</span><strong>${fmt(s.price)}d</strong></span>
+        <span><span class="plabel text-red">Cat lo SL</span><strong class="text-red">${fmt(s.sl)}d</strong></span>
+        <span><span class="plabel text-green">Ky vong TP</span><strong class="text-green">${fmt(s.tp)}d</strong></span>
+        <span><span class="plabel text-blue">Tong LS</span><strong class="text-blue">+${s.totalReturn}%</strong></span>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-labels">
+          <span class="text-red">SL: ${fmt(s.sl)}</span>
+          <span class="text-green">TP: ${fmt(s.tp)}</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${fillPct}%;background:linear-gradient(90deg,${slColor},var(--accent),${tpColor})"></div>
+          <div class="progress-marker" style="left:${fillPct}%" title="Gia hien tai: ${fmt(s.price)}"></div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-title text-green">Catalyst</div>
+        <p>${s.catalyst}</p>
+      </div>
+      <div class="info-section">
+        <div class="info-title text-red">Rui ro</div>
+        <p>${s.risk}</p>
+      </div>
+      <div class="info-section">
+        <div class="info-title text-cyan">Co tuc</div>
+        <p>${s.divText}</p>
+      </div>
+      <div class="info-section">
+        <div class="info-title text-orange">Ghi chu</div>
+        <p>${s.note}</p>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.querySelectorAll('#timeFilter .filter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#timeFilter .filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderDetails(btn.dataset.filter);
+  });
+});
+
+// NEWS FEED
+function renderNews(filter='all'){
+  const feed=document.getElementById('newsFeed');
+  const typeLabels={catalyst:'Catalyst',risk:'Rui ro',dividend:'Co tuc',kqkd:'KQKD'};
+  const typeBadges={catalyst:'badge-green',risk:'badge-red',dividend:'badge-blue',kqkd:'badge-purple'};
+  const filtered=NEWS.filter(n=>filter==='all'||n.type===filter);
+  feed.innerHTML=filtered.map(n=>`<div class="news-item" data-type="${n.type}">
+    <div class="news-tag"><span class="badge ${typeBadges[n.type]}">${typeLabels[n.type]}</span></div>
+    <div class="news-body">
+      <div class="news-text"><span class="news-ticker">${n.ticker}</span>${n.text}</div>
+      <div class="news-date">${n.date}</div>
+    </div>
+  </div>`).join('');
+}
+
+document.querySelectorAll('#newsFilter .filter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#newsFilter .filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderNews(btn.dataset.filter);
+  });
+});
+
+// INIT
+renderChart();
+renderSnapshot();
+renderPriceTable();
+renderDividends();
+renderDetails();
+renderNews();
+</script>
+
+<!-- Firebase Analytics -->
+<script type="module">
+  import{initializeApp}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+  import{getAnalytics}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-analytics.js";
+  const app=initializeApp({
+    apiKey:"AIzaSyDqU84ft_utmWN2iVEMI51eeUoXWkopcRM",
+    authDomain:"bctaichinh-c0af0.firebaseapp.com",
+    projectId:"bctaichinh-c0af0",
+    storageBucket:"bctaichinh-c0af0.firebasestorage.app",
+    messagingSenderId:"",
+    appId:"",
+    measurementId:"G-B4YXY51SFD"
+  });
+  getAnalytics(app);
+</script>
+</body>
+</html>
