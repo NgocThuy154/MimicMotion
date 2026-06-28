@@ -1,0 +1,14 @@
+{
+  "name": "vn-stock-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "crawl": "node crawl-news.js",
+    "email": "node send-email.js"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.0",
+    "xml2js": "^0.6.0"
+  }
+}

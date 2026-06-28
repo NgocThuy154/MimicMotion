@@ -138,6 +138,35 @@ footer{text-align:center;padding:30px 0;color:var(--text2);font-size:0.75rem;bor
 
 /* Disclaimer */
 .disclaimer{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:20px;font-size:0.75rem;color:var(--text2)}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:90%;max-width:520px;max-height:85vh;overflow-y:auto}
+.modal h3{margin:0 0 20px;color:var(--text);font-size:1.1rem}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:0.8rem;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:0.9rem;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:0.85rem;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{opacity:.9}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover{opacity:.9}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:6px 12px;font-size:0.75rem}
+.btn-group{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+.custom-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.65rem;font-weight:600;background:rgba(168,85,247,.15);color:var(--purple);margin-left:6px}
+
+/* Manage tab */
+.manage-actions{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.manage-table td .actions{display:flex;gap:6px}
+.empty-state{text-align:center;padding:40px;color:var(--text2)}
+.empty-state p{margin:8px 0}
+
+/* News update info */
+.news-update-info{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:0.8rem;color:var(--text2)}
+.news-update-info .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.news-new-badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:0.65rem;font-weight:600;background:rgba(34,197,94,.15);color:var(--green);margin-left:6px}
 </style>
 </head>
 <body>
@@ -160,6 +189,7 @@ footer{text-align:center;padding:30px 0;color:var(--text2);font-size:0.75rem;bor
     <div class="tab" data-tab="dividends">Co Tuc</div>
     <div class="tab" data-tab="details">Chi Tiet</div>
     <div class="tab" data-tab="news">Tin Nong</div>
+    <div class="tab" data-tab="manage">Quan Ly</div>
   </div>
 
   <!-- TAB 1: TONG QUAN -->
@@ -292,6 +322,109 @@ footer{text-align:center;padding:30px 0;color:var(--text2);font-size:0.75rem;bor
     </div>
     <div class="news-feed" id="newsFeed"></div>
   </div>
+
+  <!-- TAB 6: QUAN LY -->
+  <div class="tab-content" id="manage">
+    <div class="section-title">Quan Ly Ma Chung Khoan</div>
+    <div class="manage-actions">
+      <button class="btn btn-primary" onclick="openAddModal()">+ Them ma moi</button>
+      <button class="btn btn-outline" onclick="exportCustomStocks()">Export JSON</button>
+      <label class="btn btn-outline" style="cursor:pointer">
+        Import JSON
+        <input type="file" accept=".json" onchange="importCustomStocks(event)" style="display:none">
+      </label>
+    </div>
+
+    <div id="customStocksList"></div>
+
+    <div class="disclaimer" style="margin-top:20px">
+      Ma tuy chinh duoc luu tren trinh duyet (localStorage). Su dung Export JSON de sao luu du lieu.
+      Cac ma goc (CII, GMD, LPB...) khong the xoa hoac sua.
+    </div>
+  </div>
+</div>
+
+<!-- Modal Them/Sua Ma -->
+<div class="modal-overlay" id="stockModal">
+  <div class="modal">
+    <h3 id="modalTitle">Them ma moi</h3>
+    <input type="hidden" id="editingTicker">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Ma CK *</label>
+        <input id="f_ticker" placeholder="VD: HPG" maxlength="10">
+      </div>
+      <div class="form-group">
+        <label>Ten cong ty *</label>
+        <input id="f_name" placeholder="VD: Hoa Phat">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nganh</label>
+        <input id="f_sector" placeholder="VD: Thep">
+      </div>
+      <div class="form-group">
+        <label>Nganh (viet tat)</label>
+        <input id="f_sectorShort" placeholder="VD: Thep">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Gia hien tai (VND) *</label>
+        <input id="f_price" type="number" placeholder="VD: 25000">
+      </div>
+      <div class="form-group">
+        <label>Cat lo SL (VND) *</label>
+        <input id="f_sl" type="number" placeholder="VD: 20000">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Ky vong TP (VND) *</label>
+        <input id="f_tp" type="number" placeholder="VD: 35000">
+      </div>
+      <div class="form-group">
+        <label>Co tuc (%)</label>
+        <input id="f_divPct" type="number" step="0.1" placeholder="VD: 3.5">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Mo ta co tuc</label>
+        <input id="f_divText" placeholder="VD: 1.000d (3,5%)">
+      </div>
+      <div class="form-group">
+        <label>Thoi gian TP</label>
+        <select id="f_timeGroup">
+          <option value="short">Ngan han (&lt;3T)</option>
+          <option value="medium">Trung han (3-6T)</option>
+          <option value="long" selected>Dai han (6-9T)</option>
+          <option value="vlong">Rat dai (&gt;9T)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Thoi gian dat TP (text)</label>
+      <input id="f_timeTP" placeholder="VD: Q4/2026 - Q1/2027">
+    </div>
+    <div class="form-group">
+      <label>Catalyst</label>
+      <input id="f_catalyst" placeholder="Yeu to tich cuc">
+    </div>
+    <div class="form-group">
+      <label>Rui ro</label>
+      <input id="f_risk" placeholder="Rui ro can luu y">
+    </div>
+    <div class="form-group">
+      <label>Ghi chu</label>
+      <input id="f_note" placeholder="Ghi chu them">
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-outline" onclick="closeModal()">Huy</button>
+      <button class="btn btn-primary" onclick="saveStock()">Luu</button>
+    </div>
+  </div>
 </div>
 
 <footer>
@@ -303,7 +436,7 @@ footer{text-align:center;padding:30px 0;color:var(--text2);font-size:0.75rem;bor
 </footer>
 
 <script>
-const STOCKS = [
+const ORIGINAL_STOCKS = [
   {
     ticker:'CII', name:'DT Ha Tang KT TP.HCM', sector:'Ha tang / BOT', sectorShort:'Ha tang',
     price:18000, sl:14500, rrPct:-19, tp:24000, upside:33, divText:'~500d (2,8%)', divPct:2.8, totalReturn:36,
@@ -387,7 +520,7 @@ const STOCKS = [
   }
 ];
 
-const NEWS = [
+const ORIGINAL_NEWS = [
   {ticker:'VIC',type:'catalyst',text:'NDT ngoai mua rong 2.700 ty phien 23/6. KQKD Q2 cong bo 5/8/2026.',date:'23/06/2026'},
   {ticker:'LPB',type:'catalyst',text:'Tang kich tran phien 23/6. NDT ngoai +63 ty. Tin dung +17% YoY.',date:'23/06/2026'},
   {ticker:'DGC',type:'risk',text:'Lanh dao bi khoi to 17/3/2026. BCTC 2025 co y kien ngoai tru kiem toan.',date:'22/06/2026'},
@@ -407,6 +540,37 @@ const NEWS = [
 
 function fmt(n){return n.toLocaleString('vi-VN')}
 
+let STOCKS = [...ORIGINAL_STOCKS];
+let NEWS = [...ORIGINAL_NEWS];
+let liveNewsData = null;
+
+function loadCustomStocks(){
+  try { return JSON.parse(localStorage.getItem('customStocks')||'[]'); } catch{ return []; }
+}
+function saveCustomStocks(list){
+  localStorage.setItem('customStocks', JSON.stringify(list));
+}
+function getAllStocks(){
+  return [...ORIGINAL_STOCKS, ...loadCustomStocks()];
+}
+function getAllNews(){
+  const live = liveNewsData ? liveNewsData.articles.map(a=>({
+    ticker: a.ticker, type: a.type, text: a.text || a.title,
+    date: a.date, link: a.link, isLive: true
+  })) : [];
+  const seen = new Set(live.map(n=>`${n.ticker}-${n.text}`));
+  const base = ORIGINAL_NEWS.filter(n=>!seen.has(`${n.ticker}-${n.text}`));
+  return [...live, ...base];
+}
+
+function refreshAll(){
+  STOCKS = getAllStocks();
+  NEWS = getAllNews();
+  renderChart(); renderSnapshot(); renderPriceTable();
+  renderDividends(); renderDetails(); renderNews();
+  renderKPIs(); renderCustomStocksList();
+}
+
 // Tab switching
 document.querySelectorAll('.tab').forEach(tab=>{
   tab.addEventListener('click',()=>{
@@ -417,17 +581,50 @@ document.querySelectorAll('.tab').forEach(tab=>{
   });
 });
 
+// KPI update
+function renderKPIs(){
+  const stocks = getAllStocks();
+  const avgUpside = stocks.length ? (stocks.reduce((s,x)=>s+x.upside,0)/stocks.length).toFixed(1) : 0;
+  const divStocks = stocks.filter(s=>s.divPct>0);
+  const avgDiv = divStocks.length ? (divStocks.reduce((s,x)=>s+x.divPct,0)/divStocks.length).toFixed(1) : 0;
+  const best = stocks.reduce((a,b)=>a.totalReturn>b.totalReturn?a:b, stocks[0]);
+  const shortest = stocks.reduce((a,b)=>{
+    const order={short:0,medium:1,long:2,vlong:3};
+    return (order[a.timeGroup]||9)<(order[b.timeGroup]||9)?a:b;
+  }, stocks[0]);
+
+  const kpiGrid = document.querySelector('#overview .kpi-grid');
+  if(!kpiGrid) return;
+  const cards = kpiGrid.querySelectorAll('.kpi-card');
+  if(cards[1]){
+    cards[1].querySelector('.value').textContent = stocks.length;
+    cards[1].querySelector('.sub').textContent = stocks.map(s=>s.ticker).join(' ');
+  }
+  if(cards[2]) cards[2].querySelector('.value').textContent = '+'+avgUpside+'%';
+  if(cards[3]) cards[3].querySelector('.value').textContent = avgDiv+'%';
+  if(cards[4] && best){
+    cards[4].querySelector('.value').textContent = best.ticker+' +'+best.totalReturn+'%';
+    cards[4].querySelector('.sub').textContent = 'Upside '+best.upside+'% + Div '+best.divPct+'%';
+  }
+  if(cards[5] && shortest){
+    cards[5].querySelector('.value').textContent = shortest.ticker+' - '+shortest.timeTP;
+    cards[5].querySelector('.sub').textContent = 'TP '+fmt(shortest.tp)+' (+'+shortest.upside+'%)';
+  }
+}
+
 // BAR CHART
 function renderChart(){
   const chart=document.getElementById('returnChart');
-  const max=Math.max(...STOCKS.map(s=>s.totalReturn));
-  chart.innerHTML=STOCKS.sort((a,b)=>b.totalReturn-a.totalReturn).map(s=>{
+  const stocks=getAllStocks().sort((a,b)=>b.totalReturn-a.totalReturn);
+  const max=Math.max(...stocks.map(s=>s.totalReturn));
+  chart.innerHTML=stocks.map(s=>{
     const h=(s.totalReturn/max)*180;
     const color=s.totalReturn>=40?'var(--green)':s.totalReturn>=30?'var(--cyan)':s.totalReturn>=25?'var(--blue)':'var(--accent)';
+    const badge=s.isCustom?'<span class="custom-badge">TC</span>':'';
     return `<div class="bar-item">
       <div class="bar-value">+${s.totalReturn}%</div>
       <div class="bar" style="height:${h}px;background:${color}"></div>
-      <div class="bar-label">${s.ticker}</div>
+      <div class="bar-label">${s.ticker}${badge}</div>
     </div>`;
   }).join('');
 }
@@ -435,30 +632,32 @@ function renderChart(){
 // SNAPSHOT TABLE
 function renderSnapshot(){
   const tbody=document.getElementById('snapshotTable');
+  const stocks=getAllStocks().sort((a,b)=>b.totalReturn-a.totalReturn);
   const groupLabels={short:'Ngan han',medium:'Trung ngan han',long:'Trung - Dai han',vlong:'Dai han'};
   const groupColors={short:'text-green',medium:'text-blue',long:'text-orange',vlong:'text-purple'};
-  tbody.innerHTML=STOCKS.sort((a,b)=>b.totalReturn-a.totalReturn).map(s=>`<tr>
-    <td class="fw-bold" style="color:var(--accent)">${s.ticker}</td>
+  tbody.innerHTML=stocks.map(s=>`<tr>
+    <td class="fw-bold" style="color:var(--accent)">${s.ticker}${s.isCustom?'<span class="custom-badge">TC</span>':''}</td>
     <td>${fmt(s.price)}d</td>
     <td class="text-green fw-bold">+${s.upside}%</td>
     <td class="text-blue fw-bold">+${s.totalReturn}%</td>
     <td class="text-orange">${s.timeTP}</td>
-    <td><span class="${groupColors[s.timeGroup]}">${groupLabels[s.timeGroup]}</span></td>
+    <td><span class="${groupColors[s.timeGroup]||'text-blue'}">${groupLabels[s.timeGroup]||s.timeGroup}</span></td>
   </tr>`).join('');
 }
 
 // PRICE TABLE
 function renderPriceTable(){
   const tbody=document.getElementById('priceTableBody');
-  tbody.innerHTML=STOCKS.map(s=>`<tr>
-    <td class="fw-bold" style="color:var(--accent)">${s.ticker}</td>
+  const stocks=getAllStocks();
+  tbody.innerHTML=stocks.map(s=>`<tr>
+    <td class="fw-bold" style="color:var(--accent)">${s.ticker}${s.isCustom?'<span class="custom-badge">TC</span>':''}</td>
     <td>${s.sectorShort}</td>
     <td class="fw-bold">${fmt(s.price)}</td>
     <td class="text-red">${fmt(s.sl)}</td>
     <td class="text-red fw-bold">${s.rrPct}%</td>
     <td class="text-green fw-bold">${fmt(s.tp)}</td>
     <td class="text-green">+${s.upside}%</td>
-    <td>${s.divText}</td>
+    <td>${s.divText||'-'}</td>
     <td>${s.divPct>0?s.divPct+'%':'-'}</td>
     <td class="text-blue fw-bold">+${s.totalReturn}%</td>
     <td class="text-orange">${s.timeTP}</td>
@@ -473,11 +672,13 @@ document.querySelectorAll('#priceTable th[data-sort]').forEach(th=>{
     sortDir[key]=!sortDir[key];
     const map={ticker:'ticker',sector:'sectorShort',price:'price',sl:'sl',rr:'rrPct',tp:'tp',upside:'upside',div:'divPct',total:'totalReturn'};
     const field=map[key];
-    STOCKS.sort((a,b)=>{
+    const stocks=getAllStocks();
+    stocks.sort((a,b)=>{
       let va=a[field],vb=b[field];
       if(typeof va==='string')return sortDir[key]?va.localeCompare(vb):vb.localeCompare(va);
       return sortDir[key]?va-vb:vb-va;
     });
+    STOCKS=stocks;
     renderPriceTable();
     renderChart();
     renderSnapshot();
@@ -487,7 +688,8 @@ document.querySelectorAll('#priceTable th[data-sort]').forEach(th=>{
 // DIVIDEND TABLE
 function renderDividends(filter='all'){
   const tbody=document.getElementById('divTableBody');
-  const filtered=STOCKS.filter(s=>{
+  const stocks=getAllStocks().filter(s=>s.divInfo);
+  const filtered=stocks.filter(s=>{
     if(filter==='all')return true;
     if(filter==='done')return['done','done_qr','expired'].includes(s.divInfo.status);
     if(filter==='pending')return s.divInfo.status==='pending';
@@ -501,9 +703,8 @@ function renderDividends(filter='all'){
     else if(d.status==='done_qr')badgeClass='badge-blue';
     else if(d.status==='expired')badgeClass='badge-red';
     else if(d.status==='pending')badgeClass='badge-orange';
-    else if(d.status==='none')badgeClass='badge-gray';
     return `<tr>
-      <td class="fw-bold" style="color:var(--accent)">${s.ticker}</td>
+      <td class="fw-bold" style="color:var(--accent)">${s.ticker}${s.isCustom?'<span class="custom-badge">TC</span>':''}</td>
       <td>${d.form}</td>
       <td>${d.rate}</td>
       <td>${d.perShare}</td>
@@ -513,6 +714,14 @@ function renderDividends(filter='all'){
       <td><span class="badge ${badgeClass}">${d.statusText}</span></td>
     </tr>`;
   }).join('');
+
+  const customNoDivInfo = getAllStocks().filter(s=>s.isCustom && !s.divInfo);
+  if(customNoDivInfo.length && filter==='all'){
+    tbody.innerHTML += customNoDivInfo.map(s=>`<tr>
+      <td class="fw-bold" style="color:var(--accent)">${s.ticker}<span class="custom-badge">TC</span></td>
+      <td colspan="7" style="color:var(--text2)">Chua co thong tin co tuc</td>
+    </tr>`).join('');
+  }
 }
 
 document.querySelectorAll('#divFilter .filter-btn').forEach(btn=>{
@@ -526,14 +735,13 @@ document.querySelectorAll('#divFilter .filter-btn').forEach(btn=>{
 // DETAIL CARDS
 function renderDetails(filter='all'){
   const grid=document.getElementById('detailGrid');
-  const filtered=STOCKS.filter(s=>{
+  const stocks=getAllStocks().filter(s=>{
     if(filter==='all')return true;
     return s.timeGroup===filter;
   });
-  grid.innerHTML=filtered.map(s=>{
+  grid.innerHTML=stocks.map(s=>{
     const range=s.tp-s.sl;
-    const currentPos=((s.price-s.sl)/range)*100;
-    const slColor='var(--red)', tpColor='var(--green)';
+    const currentPos=range>0?((s.price-s.sl)/range)*100:50;
     const fillPct=Math.max(0,Math.min(100,currentPos));
     const groupLabels={short:'Ngan han (<3T)',medium:'Trung ngan (3-6T)',long:'Trung-Dai (6-9T)',vlong:'Dai han (>9T)'};
     const groupBadge={short:'badge-green',medium:'badge-blue',long:'badge-orange',vlong:'badge-purple'};
@@ -541,49 +749,34 @@ function renderDetails(filter='all'){
     return `<div class="detail-card">
       <div class="card-header">
         <div>
-          <div class="ticker">${s.ticker}</div>
+          <div class="ticker">${s.ticker}${s.isCustom?'<span class="custom-badge">Tuy chinh</span>':''}</div>
           <div class="company">${s.name}</div>
         </div>
         <div style="text-align:right">
-          <span class="badge ${groupBadge[s.timeGroup]}">${groupLabels[s.timeGroup]}</span>
+          <span class="badge ${groupBadge[s.timeGroup]||'badge-gray'}">${groupLabels[s.timeGroup]||s.timeGroup}</span>
           <div class="sector badge badge-gray" style="margin-top:4px">${s.sectorShort}</div>
         </div>
       </div>
-
       <div class="price-row">
         <span><span class="plabel">Gia hien tai</span><strong>${fmt(s.price)}d</strong></span>
         <span><span class="plabel text-red">Cat lo SL</span><strong class="text-red">${fmt(s.sl)}d</strong></span>
         <span><span class="plabel text-green">Ky vong TP</span><strong class="text-green">${fmt(s.tp)}d</strong></span>
         <span><span class="plabel text-blue">Tong LS</span><strong class="text-blue">+${s.totalReturn}%</strong></span>
       </div>
-
       <div class="progress-wrap">
         <div class="progress-labels">
           <span class="text-red">SL: ${fmt(s.sl)}</span>
           <span class="text-green">TP: ${fmt(s.tp)}</span>
         </div>
         <div class="progress-bar">
-          <div class="progress-fill" style="width:${fillPct}%;background:linear-gradient(90deg,${slColor},var(--accent),${tpColor})"></div>
+          <div class="progress-fill" style="width:${fillPct}%;background:linear-gradient(90deg,var(--red),var(--accent),var(--green))"></div>
           <div class="progress-marker" style="left:${fillPct}%" title="Gia hien tai: ${fmt(s.price)}"></div>
         </div>
       </div>
-
-      <div class="info-section">
-        <div class="info-title text-green">Catalyst</div>
-        <p>${s.catalyst}</p>
-      </div>
-      <div class="info-section">
-        <div class="info-title text-red">Rui ro</div>
-        <p>${s.risk}</p>
-      </div>
-      <div class="info-section">
-        <div class="info-title text-cyan">Co tuc</div>
-        <p>${s.divText}</p>
-      </div>
-      <div class="info-section">
-        <div class="info-title text-orange">Ghi chu</div>
-        <p>${s.note}</p>
-      </div>
+      <div class="info-section"><div class="info-title text-green">Catalyst</div><p>${s.catalyst||'Chua cap nhat'}</p></div>
+      <div class="info-section"><div class="info-title text-red">Rui ro</div><p>${s.risk||'Chua cap nhat'}</p></div>
+      <div class="info-section"><div class="info-title text-cyan">Co tuc</div><p>${s.divText||'Chua co thong tin'}</p></div>
+      <div class="info-section"><div class="info-title text-orange">Ghi chu</div><p>${s.note||''}</p></div>
     </div>`;
   }).join('');
 }
@@ -601,14 +794,26 @@ function renderNews(filter='all'){
   const feed=document.getElementById('newsFeed');
   const typeLabels={catalyst:'Catalyst',risk:'Rui ro',dividend:'Co tuc',kqkd:'KQKD'};
   const typeBadges={catalyst:'badge-green',risk:'badge-red',dividend:'badge-blue',kqkd:'badge-purple'};
-  const filtered=NEWS.filter(n=>filter==='all'||n.type===filter);
-  feed.innerHTML=filtered.map(n=>`<div class="news-item" data-type="${n.type}">
-    <div class="news-tag"><span class="badge ${typeBadges[n.type]}">${typeLabels[n.type]}</span></div>
-    <div class="news-body">
-      <div class="news-text"><span class="news-ticker">${n.ticker}</span>${n.text}</div>
-      <div class="news-date">${n.date}</div>
-    </div>
-  </div>`).join('');
+  const allNews=getAllNews();
+  const filtered=allNews.filter(n=>filter==='all'||n.type===filter);
+
+  let updateInfo='';
+  if(liveNewsData && liveNewsData.lastUpdated){
+    const d=new Date(liveNewsData.lastUpdated);
+    updateInfo=`<div class="news-update-info"><span class="dot"></span>Cap nhat luc ${d.toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})} &middot; ${liveNewsData.totalArticles||0} tin</div>`;
+  }
+
+  feed.innerHTML=updateInfo+filtered.map(n=>{
+    const newBadge=n.isLive?'<span class="news-new-badge">MOI</span>':'';
+    const linkAttr=n.link?` onclick="window.open('${n.link}','_blank')" style="cursor:pointer"`:'';
+    return `<div class="news-item" data-type="${n.type}"${linkAttr}>
+      <div class="news-tag"><span class="badge ${typeBadges[n.type]||'badge-gray'}">${typeLabels[n.type]||n.type}</span></div>
+      <div class="news-body">
+        <div class="news-text"><span class="news-ticker">${n.ticker}</span>${n.text}${newBadge}</div>
+        <div class="news-date">${n.date}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 document.querySelectorAll('#newsFilter .filter-btn').forEach(btn=>{
@@ -619,13 +824,180 @@ document.querySelectorAll('#newsFilter .filter-btn').forEach(btn=>{
   });
 });
 
+// CUSTOM STOCKS MANAGEMENT
+function openAddModal(){
+  document.getElementById('modalTitle').textContent='Them ma moi';
+  document.getElementById('editingTicker').value='';
+  ['f_ticker','f_name','f_sector','f_sectorShort','f_price','f_sl','f_tp','f_divPct','f_divText','f_timeTP','f_catalyst','f_risk','f_note'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('f_timeGroup').value='long';
+  document.getElementById('f_ticker').disabled=false;
+  document.getElementById('stockModal').classList.add('active');
+}
+
+function openEditModal(ticker){
+  const custom=loadCustomStocks();
+  const s=custom.find(x=>x.ticker===ticker);
+  if(!s) return;
+  document.getElementById('modalTitle').textContent='Sua ma: '+ticker;
+  document.getElementById('editingTicker').value=ticker;
+  document.getElementById('f_ticker').value=s.ticker;
+  document.getElementById('f_ticker').disabled=true;
+  document.getElementById('f_name').value=s.name||'';
+  document.getElementById('f_sector').value=s.sector||'';
+  document.getElementById('f_sectorShort').value=s.sectorShort||'';
+  document.getElementById('f_price').value=s.price||'';
+  document.getElementById('f_sl').value=s.sl||'';
+  document.getElementById('f_tp').value=s.tp||'';
+  document.getElementById('f_divPct').value=s.divPct||'';
+  document.getElementById('f_divText').value=s.divText||'';
+  document.getElementById('f_timeGroup').value=s.timeGroup||'long';
+  document.getElementById('f_timeTP').value=s.timeTP||'';
+  document.getElementById('f_catalyst').value=s.catalyst||'';
+  document.getElementById('f_risk').value=s.risk||'';
+  document.getElementById('f_note').value=s.note||'';
+  document.getElementById('stockModal').classList.add('active');
+}
+
+function closeModal(){
+  document.getElementById('stockModal').classList.remove('active');
+}
+
+function saveStock(){
+  const editing=document.getElementById('editingTicker').value;
+  const ticker=(document.getElementById('f_ticker').value||'').toUpperCase().trim();
+  const name=document.getElementById('f_name').value.trim();
+  const price=parseInt(document.getElementById('f_price').value)||0;
+  const sl=parseInt(document.getElementById('f_sl').value)||0;
+  const tp=parseInt(document.getElementById('f_tp').value)||0;
+
+  if(!ticker||!name||!price||!sl||!tp){
+    alert('Vui long dien day du: Ma CK, Ten, Gia, SL, TP');
+    return;
+  }
+  if(ORIGINAL_STOCKS.some(s=>s.ticker===ticker) && !editing){
+    alert('Ma '+ticker+' la ma goc, khong the them trung.');
+    return;
+  }
+
+  const divPct=parseFloat(document.getElementById('f_divPct').value)||0;
+  const upside=tp>0?Math.round((tp-price)/price*100):0;
+  const rrPct=sl>0?Math.round((sl-price)/price*100):0;
+  const totalReturn=upside+divPct;
+
+  const stock={
+    ticker, name,
+    sector: document.getElementById('f_sector').value.trim()||ticker,
+    sectorShort: document.getElementById('f_sectorShort').value.trim()||ticker,
+    price, sl, rrPct, tp, upside,
+    divText: document.getElementById('f_divText').value.trim()||'-',
+    divPct, totalReturn,
+    timeTP: document.getElementById('f_timeTP').value.trim()||'-',
+    timeGroup: document.getElementById('f_timeGroup').value,
+    catalyst: document.getElementById('f_catalyst').value.trim()||'',
+    risk: document.getElementById('f_risk').value.trim()||'',
+    note: document.getElementById('f_note').value.trim()||'',
+    isCustom: true
+  };
+
+  const custom=loadCustomStocks();
+  const idx=custom.findIndex(s=>s.ticker===ticker);
+  if(idx>=0) custom[idx]=stock; else custom.push(stock);
+  saveCustomStocks(custom);
+  closeModal();
+  refreshAll();
+}
+
+function deleteCustomStock(ticker){
+  if(!confirm('Xoa ma '+ticker+'?')) return;
+  const custom=loadCustomStocks().filter(s=>s.ticker!==ticker);
+  saveCustomStocks(custom);
+  refreshAll();
+}
+
+function renderCustomStocksList(){
+  const container=document.getElementById('customStocksList');
+  const custom=loadCustomStocks();
+  if(!custom.length){
+    container.innerHTML='<div class="empty-state"><p>Chua co ma tuy chinh nao.</p><p>Nhan "+ Them ma moi" de bat dau.</p></div>';
+    return;
+  }
+  container.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>Ma</th><th>Ten</th><th>Nganh</th><th>Gia</th><th>SL</th><th>TP</th><th>Upside</th><th>Tong LS</th><th></th></tr></thead>
+    <tbody>${custom.map(s=>`<tr>
+      <td class="fw-bold" style="color:var(--accent)">${s.ticker}<span class="custom-badge">TC</span></td>
+      <td>${s.name}</td>
+      <td>${s.sectorShort}</td>
+      <td>${fmt(s.price)}</td>
+      <td class="text-red">${fmt(s.sl)}</td>
+      <td class="text-green">${fmt(s.tp)}</td>
+      <td class="text-green">+${s.upside}%</td>
+      <td class="text-blue fw-bold">+${s.totalReturn}%</td>
+      <td><div class="actions">
+        <button class="btn btn-outline btn-sm" onclick="openEditModal('${s.ticker}')">Sua</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCustomStock('${s.ticker}')">Xoa</button>
+      </div></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function exportCustomStocks(){
+  const custom=loadCustomStocks();
+  if(!custom.length){ alert('Khong co ma tuy chinh de export.'); return; }
+  const blob=new Blob([JSON.stringify(custom,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='custom-stocks-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importCustomStocks(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!Array.isArray(data)){ alert('File khong hop le.'); return; }
+      const existing=loadCustomStocks();
+      let added=0;
+      for(const s of data){
+        if(!s.ticker||!s.name) continue;
+        s.isCustom=true;
+        const idx=existing.findIndex(x=>x.ticker===s.ticker);
+        if(idx>=0) existing[idx]=s; else{ existing.push(s); added++; }
+      }
+      saveCustomStocks(existing);
+      refreshAll();
+      alert('Import thanh cong: '+data.length+' ma ('+added+' moi).');
+    }catch(err){ alert('Loi doc file: '+err.message); }
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+// Fetch live news
+async function fetchLiveNews(){
+  try{
+    const res=await fetch('/data/news.json?t='+Date.now());
+    if(!res.ok) return;
+    liveNewsData=await res.json();
+    if(liveNewsData.articles && liveNewsData.articles.length>0){
+      renderNews();
+    }
+  }catch{}
+}
+
+// Close modal on overlay click
+document.getElementById('stockModal').addEventListener('click',function(e){
+  if(e.target===this) closeModal();
+});
+
 // INIT
-renderChart();
-renderSnapshot();
-renderPriceTable();
-renderDividends();
-renderDetails();
-renderNews();
+refreshAll();
+fetchLiveNews();
 </script>
 
 <!-- Firebase Analytics -->
