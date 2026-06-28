@@ -166,3 +166,6 @@ outputs/
 
 # Replicate
 .cog
+
+# Firebase
+.firebase/
